@@ -33,7 +33,7 @@ Before getting started, make sure you have the following installed on your syste
 
 ## Usage
 
-1. Make sure the required data files are present in the data directory. Check that the client.xml, tariff.xml, locality.xml, and taxation-condition.xml files are present and contain the correct data.
+1. Make sure the required data files are present in the data directory. Check that the client.xml, tarif.xml, localite.xml, and conditiontaxation.xml files are present and contain the correct data.
 
 2. Run the program using the following command:
 
