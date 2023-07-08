@@ -1,0 +1,9 @@
+{
+    "name": "felke/transport-besson",
+    "autoload": {
+        "psr-4": {
+            "Felke\\TransportBesson\\": "src/"
+        }
+    },
+    "require": {}
+}
