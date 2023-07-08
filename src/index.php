@@ -5,7 +5,8 @@ require_once 'TaxCondition/TaxCondition.php';
 
 $exit = false;
 
-// Permet d'éviter que le programme s'arrête, pour pouvoir effectuer plusieurs tâches sans taper la commande.
+// Permet d'éviter que le programme s'arrête, pour pouvoir effectuer les tâches sans taper la commande.
+// Pour que le programme s'arrête complètement, soit faire CTRL+C soit taper 4 au menu.
 while (!$exit) {
 
     // Charger les fichier de données format XML
@@ -14,7 +15,7 @@ while (!$exit) {
     $localiteXml = simplexml_load_file('data/localite.xml');
     $taxConditionXml = simplexml_load_file('data/conditionTaxation.xml');
 
-    // Créer un tableau pour stocker les instances de Client
+    // Stocker les instances du client
     $clients = [];
 
     // Parcourir les objets Client du fichier XML
@@ -28,7 +29,8 @@ while (!$exit) {
         $clients[] = $client;
     }
 
-    // Demander à l'utilisateur ce qu'il souhaite faire
+    // Demander à l'utilisateur ce qu'il souhaite faire comme tâche.
+    // Il peut: Vérifier la liste de ses clients, rechercher un client à partir d'un ID, Calculer la taxe HT d'un transport.
     echo "Que souhaitez-vous faire ? (Tapez le numéro correspondant puis la touche ENTER)" . PHP_EOL;
     echo "[1] Afficher la liste des clients." . PHP_EOL;
     echo "[2] Rechercher un client avec son ID." . PHP_EOL;
@@ -37,7 +39,9 @@ while (!$exit) {
 
     $choice = readline("Entrez votre choix : ");
 
-    // Effectuer l'action correspondante
+    // ce switch nous propose le choix entre 4 tâches.
+    // Vérifier la liste de ses clients, rechercher un client à partir d'un ID, Calculer la taxe HT d'un transport
+    // ou arrêter le programme.
     switch ($choice) {
         case '1':
             // Afficher la liste des clients
@@ -45,59 +49,133 @@ while (!$exit) {
             foreach ($clients as $client) {
                 $client->afficher();
             }
-
             break;
+
         case '2':
             // Rechercher un client par son ID
-            $clientId = readline("Entrez l'ID du client : ");
+            $clientId = (int) readline("Entrez l'ID du client : ");
             $foundClient = null;
-    
+
             foreach ($clients as $client) {
                 if ($client->id === (int)$clientId) {
                     $foundClient = $client;
                     break;
                 }
             }
-    
+            
+            // Si le client est trouvé, on l'affiche, sinon on retourne une erreur.
             if ($foundClient) {
                 echo "Client trouvé :" . PHP_EOL;
                 $foundClient->afficher();
             } else {
                 echo "Aucun client trouvé avec l'ID : " . $clientId . PHP_EOL;
             }
+
             break;
 
         // Calculer le prix HT et afficher le détail du calcul
         case '3':
             // Sélectionner un expéditeur et un destinataire
-            $expediteur = $clients[array_rand($clients)];
-            $destinataire = $clients[array_rand($clients)];
+            $sender = $clients[array_rand($clients)];
+            $recipient = $clients[array_rand($clients)];
 
             // Saisir le nombre de colis et le poids de l'expédition
-            $nombreColis = (int) readline("Entrez le nombre de colis : ");
-            $poids = (float) readline("Entrez le poids de l'expédition : ");
+            $packageNumber = 0;
 
-            // Sélectionner qui paie le transport : l'expéditeur ou le destinataire
-            $paieTransport = readline("Qui paie le transport (E pour l'expéditeur, D pour le destinataire) : ");
-
-            // Demander à l'utilisateur de saisir les informations du destinataire
-            $destinataireCodePostal = readline("Entrez le code postal du destinataire : ");
-            $destinataireVille = readline("Entrez la ville du destinataire : ");
-            $destinataireZone = (int) readline("Entrez la zone du destinataire : ");
-
-            // Déterminer la zone du destinataire en fonction de ses informations
-            $zone = null;
-
-            foreach ($localiteXml->Response->Object as $object) {
-                $localiteData = $object->ObjectLocalite;
-                if ($localiteData->codePostal == $destinataireCodePostal && $localiteData->ville == $destinataireVille && (int) $localiteData->zone === $destinataireZone) {
-                    $zone = (int) $localiteData->zone;
-                    break;
-                } else {
-                    echo "La zone du destinataire n'a pas pu être déterminée pour les informations saisies. Veuillez réessayer." . PHP_EOL;
-                    break;
+            while ($packageNumber <= 0 || empty($packageNumber)) {
+                $packageNumber = (int) readline("Entrez le nombre de colis : ");
+                if ($packageNumber <= 0 || empty($packageNumber)) {
+                    echo "Veuillez entrer un nombre de colis valide (supérieur à zéro)." . PHP_EOL;
                 }
             }
+            
+            $weight = 0;
+            while ($weight <= 0 || empty($weight)) {
+                $weight = (float) readline("Entrez le poids de l'expédition : ");
+                if ($weight <= 0 || empty($weight)) {
+                    echo "Veuillez entrer un poids valide (supérieur à zéro)." . PHP_EOL;
+                }
+            }
+
+            $recipientPostalCode = '';
+
+            do {
+                $recipientPostalCode = readline("Entrez le code postal du destinataire : ");
+
+                if (empty($recipientPostalCode)) {
+                    echo "Veuillez entrer un code postal valide." . PHP_EOL;
+                } else {
+                    // Vérifier si le code postal existe dans les données XML
+                    $postalCodeExists = null;
+                    
+                    foreach ($localiteXml->Response->Object->ObjectLocalite as $object) {
+                        $localiteData = $object;
+                        
+                        if ($localiteData->codePostal == $recipientPostalCode) {
+                            $postalCodeExists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$postalCodeExists) {
+                        echo "Le code postal saisi n'existe pas. Veuillez réessayer." . PHP_EOL;
+                    }
+                }
+            } while (!$postalCodeExists);
+
+            $recipientCity = '';
+
+            do {
+                $recipientCity = readline("Entrez la ville du destinataire : ");
+                if (!$recipientCity || empty($recipientCity)) {
+                    echo "Veuillez entrer une ville valide." . PHP_EOL;
+                } else {
+                    // Vérifier si la ville existe dans les données XML
+                    $cityExists = false;
+                    
+                    foreach ($localiteXml->Response->Object->ObjectLocalite as $object) {
+                        $localiteData = $object;
+                        
+                        if ($localiteData->ville == $recipientCity) {
+                            $cityExists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$cityExists) {
+                        echo "La ville saisie n'existe pas. Veuillez réessayer." . PHP_EOL;
+                    }
+                }
+            } while (!$cityExists);
+
+            $recipientZone = 0;
+
+            do {
+                $recipientZone = (int) readline("Entrez la zone du destinataire : ");
+
+                if ($recipientZone <= 0 || empty($recipientZone) || !$recipientZone) {
+                    echo "Veuillez entrer une zone valide." . PHP_EOL;
+                } else {
+                    // Déterminer la zone du destinataire en fonction de ses informations
+                    $zone = null;
+                    $zoneFound = false;
+            
+                    foreach ($localiteXml->Response->Object->ObjectLocalite as $object) {
+                        $localiteData = $object;
+            
+                        if ($localiteData->codePostal == $recipientPostalCode && $localiteData->ville == $recipientCity && (int) $localiteData->zone === $recipientZone) {
+                            $zone = (int) $localiteData->zone;
+                            $zoneFound = true;
+                            break;
+                        }
+                    }
+            
+                    if (!$zoneFound) {
+                        echo "La zone du destinataire n'a pas pu être déterminée pour les informations saisies. Veuillez réessayer." . PHP_EOL;
+                    }
+                }
+
+            } while (!$zoneFound);
 
             // Charger les fichiers XML contenant les tarifs et les conditions de taxation
             $tarifXml = simplexml_load_file('data/tarif.xml');
@@ -108,7 +186,7 @@ while (!$exit) {
 
             foreach ($tarifXml->Response->Object as $object) {
                 $tarifData = $object->ObjectTarif;
-                if ($tarifData->idClient == $destinataire->id && $tarifData->codeDepartement == $destinataire->codePostal && $tarifData->zone == $zone) {
+                if ($tarifData->idClient == $recipient->id && $tarifData->codeDepartement == $recipient->codePostal && $tarifData->zone == $zone) {
                     $tarif = $tarifData;
                     break;
                 }
@@ -121,7 +199,7 @@ while (!$exit) {
                 foreach ($tarifXml->Response->Object as $object) {
                     $tarifData = $object->ObjectTarif;
                     
-                    if ($tarifData->idClient == $destinataire->id && $tarifData->codeDepartement == $destinataire->codePostal && $tarifData->zone == $zoneMinusOne) {
+                    if ($tarifData->idClient == $recipient->id && $tarifData->codeDepartement == $recipient->codePostal && $tarifData->zone == $zoneMinusOne) {
                         $tarif = $tarifData;
                         break;
                     }
@@ -134,7 +212,7 @@ while (!$exit) {
             }
 
             // Calculer le montant HT
-            $montantHTTarif = $tarif->montant * $nombreColis;
+            $montantHTTarif = $tarif->montant * $packageNumber;
 
             // Rechercher les conditions de taxation correspondantes dans le fichier conditiontaxation.xml
             $conditionTaxation = null;
@@ -142,7 +220,7 @@ while (!$exit) {
             foreach ($conditionTaxationXml->Response->Object as $object) {
                 $conditionTaxationData = $object->ObjectConditionTaxation;
 
-                if ($conditionTaxationData->idClient == $expediteur->id) {
+                if ($conditionTaxationData->idClient == $sender->id) {
                     $conditionTaxation = $conditionTaxationData;
                     break;
                 }
@@ -156,13 +234,16 @@ while (!$exit) {
             // Déterminer la taxe à appliquer en fonction de qui paie le transport (expéditeur ou destinataire)
             $taxe = 0;
 
-            if ($paieTransport === 'E') {
-                if ($conditionTaxation->useTaxePortPayeGenerale === 'true') {
-                    $taxe = $conditionTaxation->taxePortPaye;
-                }
-            } elseif ($paieTransport === 'D') {
-                if ($conditionTaxation->useTaxePortDuGenerale === 'true') {
-                    $taxe = $conditionTaxation->taxePortDu;
+            // Sélectionner qui paie le transport : l'expéditeur ou le destinataire
+            $paieTransport = "";
+            
+            // E est Expéditeur
+            while ($paieTransport !== 'E' && $paieTransport !== 'D') {
+                $paieTransport = readline("Qui paie le transport (E pour l'expéditeur, D pour le destinataire) : ");
+                $paieTransport = strtoupper($paieTransport); // Convertir l'entrée en majuscules
+                
+                if ($paieTransport !== 'E' && $paieTransport !== 'D') {
+                    echo "Veuillez entrer une valeur valide (E ou D)." . PHP_EOL;
                 }
             }
 
@@ -170,14 +251,14 @@ while (!$exit) {
             $montantTotal = $montantHTTarif + ($montantHTTarif * $taxe / 100);
 
             // Afficher le détail du calcul
-            echo "Détail du calcul :" . PHP_EOL;
-            echo "Expéditeur : " . $expediteur->raisonSociale . " (" . $expediteur->ville . ")" . PHP_EOL;
-            echo "Destinataire : " . $destinataire->raisonSociale . " (" . $destinataire->ville . ")" . PHP_EOL;
-            echo "Nombre de colis : " . $nombreColis . PHP_EOL;
-            echo "Poids de l'expédition : " . $poids . PHP_EOL;
-            echo "Montant HT (tarif) : " . $montantHTTarif . PHP_EOL;
-            echo "Taxe à appliquer : " . $taxe . "%" . PHP_EOL;
-            echo "Montant total : " . $montantTotal . PHP_EOL;
+            echo "Détail du calcul :\n" .
+            "Expéditeur : " . $sender->raisonSociale . " (" . $sender->ville . ")\n" .
+            "Destinataire : " . $recipient->raisonSociale . " (" . $recipient->ville . ")\n" .
+            "Nombre de colis : " . $packageNumber . "\n" .
+            "Poids de l'expédition : " . $weight . "\n" .
+            "Montant HT (tarif) : " . $montantHTTarif . "\n" .
+            "Taxe à appliquer : " . $taxe . "%\n" .
+            "Montant total : " . $montantTotal . "\n";
 
             break;
 
