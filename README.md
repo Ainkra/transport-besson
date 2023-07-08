@@ -31,5 +31,8 @@ index.php est le programme principal. C'est le point d'entrée, avec l'ensemble 
 
 Les fichiers XML se trouvent dans le dossier data.
 
-Une seule classe est présente: TaxCondition, qui permettent de mettre les tarifs
+La classe TaxCondition, qui permettent de mettre les tarifs
 généraux et les taxes générales.
+
+La classe Client, qui permet de récupérer les clients, d'utiliser leurs informations et d'afficher
+notamment leurs informations.
