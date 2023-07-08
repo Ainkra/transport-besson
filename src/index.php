@@ -276,7 +276,8 @@ while (!$exit) {
                 "Montant HT (tarif) : " . $montantHTTarif . "\n" .
                 "Taxe à appliquer : " . $taxe . "%\n" .
                 "Montant total : " . $montantTotal . "\n" .
-                PHP_EOL . PHP_EOL
+                PHP_EOL . PHP_EOL.
+                "⇗⇗ Les résultats sont ici ⇖⇖".PHP_EOL
                 ;
 
             break;
