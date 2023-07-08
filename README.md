@@ -1,46 +1,35 @@
-# transport-besson
+# Exercice transport-besson
 
-## Description
+Le projet a été développé sous PHP 8.1.10, sur un ordinateur sous Windows 11, effectué en environ 16 heures dispatchées sur
+2 jours.
 
-  This project is a test for the company Transport Besson. The goal is to develop a program that can calculate the net amount of a transportation cost.
+## Prérequis: Avoir PHP d'installé sur son ordinateur (Passez cette étape si c'est déjà fait)
 
-## Prerequisites
+(Linux) Ouvrez votre terminal, puis exécutez: sudo apt-get install php
 
-Before getting started, make sure you have the following installed on your system:
+(Windows) Cliquez ici: <https://windows.php.net/downloads/releases/php-8.1.21-Win32-vs16-x64.zip>.
+Une fois cela fait, naviguez dans C:\Program Files puis effectuez l'extraction du fichier .ZIP dans ce même dossier.
 
-- PHP (version 8.0 or higher). I personally have the Laragon software that installs it for me directly.
-- Composer (for managing PHP dependencies)
+Une fois cela fait, tapez dans la barre de recherche "environment var",
+allez dans Environment Variables -> System variables (Double clic sur Path) -> Cliquez sur New puis collez C:\Program Files\php-8.1.21
 
-## Getting started
+## Mettre le projet en route
 
-1. Clone the project on your computer :
+1. Ouvrez Visual Studio Code puis ouvrez le dossier du projet (transport-besson-main)
 
-  ```shell
-  git clone https://github.com/Ainkra/transport-besson.git
-  ```
+2. Allez sur la roue crantée en bas à gauche, cliquez sur paramètres.
+Tapez "php" puis cliquez sur "Modifier dans settings.json" sous PHP > Validate: Executable Path. Vous devrez mettre le path vers l'exécutable PHP. Pour ma part ce sera C:/Program Files/php-8.1.21/php.exe.
 
-2. Navigate to the project directory
+2. Une fois dans le projet, naviguez jusqu'au dossier src avec la ligne de commande: cd src
 
-  ```shell
-  cd transport-besson
-  ```
+3. Exécutez la commande php index.php pour exécuter le programme.
+L'ensemble des instructions à suivre seront indiquées dans le terminal.
 
-3. Install project dependencies using Composer:
+## Structure du projet
 
-  ```shell
-  composer install
-  ```
+index.php est le programme principal. C'est le point d'entrée, avec l'ensemble de la logique métier.
 
-## Usage
+Les fichiers XML se trouvent dans le dossier data.
 
-1. Make sure the required data files are present in the data directory. Check that the client.xml, tarif.xml, localite.xml, and conditiontaxation.xml files are present and contain the correct data.
-
-2. Run the program using the following command:
-
-```shell
-php index.php
-```
-
-This will start the program and display a menu with different options.
-
-3. Follow the program instructions to perform various actions, such as displaying clients, searching for a client by ID, and calculating taxes.
+Une seule classe est présente: TaxCondition, qui permettent de mettre les tarifs
+généraux et les taxes générales.
